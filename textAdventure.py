@@ -1,5 +1,4 @@
 # Text Adventure game
-# CopyLEFT 2018 - Waces F.
 #---Imports---
 import cmd
 import textwrap
@@ -9,8 +8,7 @@ import os
 from time import sleep
 
 #---Some vars---
-screenWidth = 80
-jftsod = "Just for the sake of debugging/developing."
+jftsod = "Just for the sake of debugging."
 
 #---Syntax list--- with models that are a list of words that can mean one thing
 yesModel = ('yes','y','ye','yep','yup','yus','yis','s','sim','yee','yy')
@@ -44,13 +42,7 @@ class Player:
         self.name = name
         self.position = startPos
         self.inventory = [] # Maybe change to/use dictionary to store name?
-        self.reachable = () #Use? Nahhh, to remove
         #Add self.atributeName = value(s) to add more values to player
-
-
-# Placeholder player:
-# player = Player('Player', darkRoom0)
-# player.inventory = ['readMe.md'] #Placeholder item
 
 #---Objects class---
 class Object:
@@ -63,7 +55,7 @@ class Object:
         self.usable = False # If this object can be used
         self.useResult = ()
         self.readable = False
-        self.texto = ""
+        self.texto = "" #read text
         self.useVanish = False # If the object will disappear if used
         self.pickable = takeBool # If it can be picked by the player
 
@@ -146,14 +138,14 @@ class Room:
         self.connections = (wall,wall,wall,wall,wall,wall,wall,wall,empty,empty,ceiling,floor)
         self.items = [] # Make it like the inventory(?)
 
-    def descItems(self):
+    def descItems(self): #Whut
         if len(self.items) > 0:
             for item in self.items:
                 print("")
                 print(item.groundDesc)
 
 
-#---Rooms/Doors--- # Doors are placed after the two rooms you want to connect
+#---Rooms/Doors--- # Doors placed after the two rooms you want to connect
 darkRoom0 = Room("Dark room",
                 "I'm in a room with a very dim light source that comes from above, there is a door to somewhere to the North.",
                 "It is a room with dim light.")
