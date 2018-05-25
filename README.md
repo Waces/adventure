@@ -1,6 +1,4 @@
-#  ╔═════════════╗
 #     adv≡nture  
-#  ╚═════════════╝
-##    Bottom text
+###    Bottom text
 
 Some text adventure '''game''' I'm making in python
