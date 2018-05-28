@@ -1,4 +1,5 @@
 # Text Adventure game
+# CopyLEFT 2018 - Waces F.
 #---Imports---
 import cmd
 import textwrap
@@ -8,7 +9,17 @@ import os
 from time import sleep
 
 #---Some vars---
-jftsod = "Just for the sake of debugging."
+## Teminal size:
+tcol = os.get_terminal_size()
+screenWidth = tcol[0]
+## write speeds
+faster = 0.009
+fast = 0.02
+normal = 0.05
+slow = 0.07
+slooow = 1
+
+jftsod = "Just for the sake of debugging/developing."
 
 #---Syntax list--- with models that are a list of words that can mean one thing
 yesModel = ('yes','y','ye','yep','yup','yus','yis','s','sim','yee','yy')
@@ -42,7 +53,18 @@ class Player:
         self.name = name
         self.position = startPos
         self.inventory = [] # Maybe change to/use dictionary to store name?
+        self.reachable = () #Use? Nahhh, to remove
+        self.carryWeight = 10
         #Add self.atributeName = value(s) to add more values to player
+    def getCarry(self):
+        iw = 0
+        for i in self.inventory:
+            iw += i.weight
+        return iw
+
+# Placeholder player:
+# player = Player('Player', darkRoom0)
+# player.inventory = ['readMe.md'] #Placeholder item
 
 #---Objects class---
 class Object:
@@ -55,9 +77,9 @@ class Object:
         self.usable = False # If this object can be used
         self.useResult = ()
         self.readable = False
-        self.texto = "" #read text
-        self.useVanish = False # If the object will disappear if used
+        self.texto = ""
         self.pickable = takeBool # If it can be picked by the player
+        self.weight = 1
 
 #---Objects---
 testObj = Object("testObj", "There is an undefined test object.", "A test object",True)
@@ -65,27 +87,29 @@ testObj.longDesc = "It is an object made to test the"
 testObj.words = ['test object','testobj']
 
 readMe = Object("readMe.md",
-                "There is a paper note with some square cuts at the bottom.",
+                "in this area, lays a strange paper with something written",
                 "A paper note with square cuts at the bottom",
                 True)
 readMe.words = ['readme','note','readme.md']
 readMe.readable = True
 readMe.longDesc = "It is a note with some square cuts at the bottom."
 readMe.texto = "It reads 'Hello World'."
+readMe.weight = 1
 
 woodTable = Object("Wooden table",
-                   "There is a wooden table.",
+                   "I see a short wooden table by the east wall",
                    "A wooden table",
                    False)
 woodTable.longDesc = woodTable.shortDesc
 woodTable.words = ['table','wooden table']
 
 key0 = Object("Rusty key",
-              "There is a rusty key laying in this place",
+              "looking at the floor I see a rusty key laying here",
               "It's a rusty key",
               True)
 key0.longDesc = "It is a, old rusty key, it may serve to open a door"
 key0.words = ['key','rusty key']
+key0.weight = 2
 
 lapTop = Object("Laptop",
                 "I see a laptop laying on the floor",
@@ -132,32 +156,57 @@ class Room:
     def __init__(self, name, longDesc, shortDesc):
         self.name = name
         self.longDescription = longDesc
+        self.dirs = ""
         self.shortDescription = shortDesc
         #                  The rooms/blockages in each direction
         #                   N,   S,   E,    W,  NE,  ES,  SW,  WN,  in,   out,  up,     down - 11
         self.connections = (wall,wall,wall,wall,wall,wall,wall,wall,empty,empty,ceiling,floor)
         self.items = [] # Make it like the inventory(?)
+        self.beento = False
 
-    def descItems(self): #Whut
+    def descItems(self):
         if len(self.items) > 0:
             for item in self.items:
                 print("")
-                print(item.groundDesc)
+                print(item.grioundDesc)
 
+    def itemsInDesc(self):
+        id = []
+        for i in self.items:
+            id.append(i.groundDesc)
+        if len(id) > 0:
+            tS = ", ".join(id)
+            ttS = [self.longDescription, tS, self.dirs]
+            #print(ttS[0],ttS[1],ttS[2])
+            tSr = ", ".join(ttS)
+            #print(tSr)
+            write(tSr ,fast)
+        else:
+            ttS = [self.longDescription, self.dirs]
+            tSr = ", ".join(ttS)
+            write(tSr, fast)
 
-#---Rooms/Doors--- # Doors placed after the two rooms you want to connect
+#---Rooms/Doors--- # Doors are placed after the two rooms you want to connect
 darkRoom0 = Room("Dark room",
-                "I'm in a room with a very dim light source that comes from above, there is a door to somewhere to the North.",
+                "I'm in a room with a very dim light source that comes from above",
                 "It is a room with dim light.")
+darkRoom0.dirs = "there is a door to somewhere to the North."
+
 dripRoom1 = Room("Puddle room",
-                "I'm in a room with faded light and a puddle formed with water dripping from the ceiling, to the South there is a door to a dark room, to the West there is a door to somewhere and another door to the North.",
+                "I'm in a room with faded light and a puddle formed with water dripping from the ceiling",
                 "It's a room with water dripping from the ceiling.")
+dripRoom1.dirs = "to the South there is a door to a dark room, to the West there is a door to somewhere and another door to the North."
+
 key_Room2 = Room("Strange room",
-                "I'm in an oddly feeling room, there is a door to another room to the East",
+                "I'm in an oddly feeling room",
                 "It's an odd room, for some reason.")
+key_Room2.dirs = "there is a door to another room to the East"
+
 finlRoom3 = Room("Marble room",
-                "I'm in a room with marble beige walls, there is a door leading to another room to the South.",
+                "I'm in a room with marble beige walls",
                 "It is a room with a laptop on the floor.")
+finlRoom3.dirs = "there is a door leading to another room to the South."
+
 lckdDoor0 = Door(True, finlRoom3, dripRoom1)
 lckdDoor0.keyItem = key0
 
@@ -211,6 +260,7 @@ lapTop.useResult = l0t
 #---Call player---
 player = Player('Player', darkRoom0) #Placeholder
 player.inventory = [readMe]
+player.position.beento = True
 
 #---Cmd class--- # Don't even ask me how this works
 class userInput(cmd.Cmd):
@@ -237,14 +287,16 @@ class userInput(cmd.Cmd):
         lookAt = arg.split()
 
         if arg.lower() == 'around':
-            print(player.position.longDescription)
-            pr = player.position
-            pr.descItems()
+            player.position.itemsInDesc()
+            #print(player.position.longDescription)
+            #pr = player.position
+            #pr.descItems()
         elif arg.lower() == 'inventory':
             if len(player.inventory) > 0:
-                print("In your inventory you have:")
+                write("In your inventory you have:", fast)
                 for item in player.inventory:
-                    print('|',item.name)
+                    print('[%s Kg]'%item.weight ,item.name)
+                    sleep(fast)
             else:
                 print("Inventory is empty.")
         elif len(lookAt) > 0 and lookAt[0] == 'at':
@@ -335,10 +387,14 @@ Southeast, Southwest, Northwest, In, Out, Up and Down"""
                     print(player.position.connections[doGoDir].lockedText)
                 else: #If it's a valid room
                     player.position = player.position.connections[doGoDir]
-                    print("You go",goTex, "and get to", player.position.name)
-                    print(player.position.longDescription)
-                    pr = player.position
-                    pr.descItems()
+                    write("You go %s and get to %s" %(goTex,player.position.name), faster)
+                    print("")
+                    if player.position.beento == False:
+                        player.position.itemsInDesc()
+                        player.position.beento = True
+                    #print(player.position.longDescription)
+                    #pr = player.position
+                    #pr.descItems()
             else: #Print the blockage text
                 print(player.position.connections[doGoDir].text)
         else:
@@ -353,9 +409,12 @@ Southeast, Southwest, Northwest, In, Out, Up and Down"""
                #print(i.words)
                if arg in i.words:
                    if i.pickable == True:
-                       player.inventory.append(i)
-                       print("You got %s" %i.name)
-                       pr.items.pop(pr.items.index(i))
+                       if key0.weight + player.getCarry() < player.carryWeight:
+                            player.inventory.append(i)
+                            write("You got %s" %i.name, faster)
+                            pr.items.pop(pr.items.index(i))
+                       else:
+                            write("I'm too full to carry this.",0.05)
                    else:
                        print("It's better to keep this where it is.")
                else:
@@ -480,7 +539,10 @@ Southeast, Southwest, Northwest, In, Out, Up and Down"""
 
     def do_ttuff(self, arg): #jftsod
         """Just for testing something"""
-        write("Somebody once told me the world is gonna roll me.", 0.05)
+        print('test')
+        #write("Somebody once told me the world is gonna roll me.", 0.05)
+        #print(player.getCarry())
+        player.position.itemsInDesc()
 
     def do_clear(self, arg):
         """Use this to clear the screen."""
@@ -492,11 +554,12 @@ Southeast, Southwest, Northwest, In, Out, Up and Down"""
 
 #---Text wrap stuff---
 def write(text, time):
-    for character in text:
+    texxt = textwrap.fill(text, screenWidth)
+    for character in texxt:
         sys.stdout.write(character)
         sys.stdout.flush()
         sleep(time)
-
+    print("")
 
 #---Title screen---
 def titleScreen():
@@ -504,19 +567,19 @@ def titleScreen():
     print("  ╔═════════════╗")
     print("  |  adv≡nture  |")
     print("  ╚═════════════╝")
-    write("   ~Bottom text~ \n",0.08)
+    write("   ~Bottom text~ \n", normal)
     print("")
     sleep(0.08)
     print(" [start|help|quit]")
-    write(" By Waces-----2018",0.08)
+    write(" By Waces-----2018", normal)
 
 if __name__ == '__main__':
     sleep(1.08)
     os.system('clear')
     #titleScreen()
     #sleep(0.08)
-    write("Just look around", 0.08)
-    print("")
+    write("Just look around", normal)
+    #print("")
     userInput().cmdloop()
     print('\nThanks for playing!')
     sleep(2)
